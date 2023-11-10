@@ -14,11 +14,9 @@
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	
 }
 .audio-player {
-	 //исправить
-	width: 500px;
+	min-width: 500px;
 	height: 200px;
 	display: flex;
 	position: relative;
@@ -81,8 +79,7 @@
 
 	&__volume-range {
 		// Стилизация ползунка громкости
-		width: 238px ;
-		
+		width: 238px;
 	}
 	&__progress {
 		width: 313px;
@@ -98,7 +95,6 @@
 		-webkit-line-clamp: 2; // количество строк
 		-webkit-box-orient: vertical;
 		overflow: hidden;
-		
 	}
 
 	&__progress,
