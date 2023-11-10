@@ -1,127 +1,132 @@
 // App.jsx
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from 'react'
+import './Normalize.css'
+import './App.scss'
 
-import "./App.scss";
+import {
+	Logo,
+	PauseStream,
+	PlayStream,
+	RewindNext,
+	RewindPrev,
+	VolumeCross,
+	VolumeLoud,
+} from './assets'
 
-import ReactLogo from "./assets/Logo.svg";
-import Background from "./assets/BackgroundImage.jpg";
-import PauseSvg from "./assets/pause-stream.svg";
-import RewindNextSvg from "./assets/rewind-next.svg";
-import RewindPrevSvg from "./assets/rewind-prev.svg";
-import VolumeCrossSVG from "./assets/volume-cross.svg";
-import VolumeloudSvg from "./assets/volume-loud.svg";
-
-const tracks = [
-  {
-    title: "Track 1",
-    source: "url_to_track_1.mp3",
-    cover: "url_to_cover_image_1.jpg",
-  },
-  {
-    title: "Track 2",
-    source: "url_to_track_2.mp3",
-    cover: "url_to_cover_image_2.jpg",
-  },
-  // ... добавьте другие треки по желанию
-];
+import { tracks } from './Track'
 
 const App = () => {
-  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [volume, setVolume] = useState(0.75);
-  const audioRef = useRef(new Audio(tracks[currentTrackIndex].source));
-  const intervalRef = useRef();
+	const [currentTrackIndex, setCurrentTrackIndex] = useState(0)
+	const [isPlaying, setIsPlaying] = useState(false)
+	const [volume, setVolume] = useState(0.75)
+	const [trackProgress, setTrackProgress] = useState(0)
+	const audioRef = useRef(new Audio(tracks[currentTrackIndex].source))
+	const intervalRef = useRef()
 
-  const startRotation = () => {
-    intervalRef.current = setInterval(() => {
-      const image = document.getElementById("cover-image");
-      image.style.transform += "rotate(1deg)";
-    }, 50);
-  };
+	useEffect(() => {
+		const audio = audioRef.current
+		audio.src = tracks[currentTrackIndex].source
+		setTrackProgress(0)
+		if (isPlaying) audio.play()
+		return () => audio.pause()
+	}, [currentTrackIndex, isPlaying])
 
-  const stopRotation = () => {
-    clearInterval(intervalRef.current);
-  };
+	useEffect(() => {
+		const updateProgress = () => {
+			setTrackProgress(audioRef.current.currentTime)
+		}
 
-  const togglePlay = () => {
-    const audio = audioRef.current;
-    if (isPlaying) {
-      audio.pause();
-      stopRotation();
-    } else {
-      audio.play();
-      startRotation();
-    }
-    setIsPlaying(!isPlaying);
-  };
+		if (isPlaying) {
+			intervalRef.current = setInterval(updateProgress, 1000)
+		} else {
+			clearInterval(intervalRef.current)
+		}
 
-  const changeVolume = (e) => {
-    const newVolume = e.target.value;
-    audioRef.current.volume = newVolume;
-    setVolume(newVolume);
-  };
+		return () => clearInterval(intervalRef.current)
+	}, [isPlaying])
 
-  const changeTrack = (step) => {
-    setCurrentTrackIndex((prevIndex) => {
-      let index = prevIndex + step;
-      if (index < 0) {
-        index = tracks.length - 1;
-      } else if (index >= tracks.length) {
-        index = 0;
-      }
-      return index;
-    });
-  };
+	const togglePlay = () => {
+		setIsPlaying(!isPlaying)
+	}
 
-  useEffect(() => {
-    const audio = audioRef.current;
-    audio.src = tracks[currentTrackIndex].source;
-    if (isPlaying) {
-      audio.play();
-    }
-    return () => {
-      audio.pause();
-      stopRotation();
-    };
-  }, [currentTrackIndex]);
+	const changeTrack = step => {
+		setCurrentTrackIndex(
+			prevIndex => (prevIndex + step + tracks.length) % tracks.length
+		)
+	}
 
-  return (
-    <div className="audio-player">
+	const handleVolumeChange = e => {
+		setVolume(e.target.value)
+		audioRef.current.volume = e.target.value
+	}
 
+	const handleTrackProgressChange = e => {
+		const newTime = e.target.value
+		audioRef.current.currentTime = newTime
+		setTrackProgress(newTime)
+	}
 
+	return (
+		<div className='wrapper'>
+			<div className='audio-player'>
+				{/* Кнопки управления */}
+				<div className='audio-player__controls'>
+					<button
+						className='audio-player__button'
+						onClick={() => changeTrack(-1)}
+					>
+						<RewindNext />
+					</button>
+					<button className='audio-player__button' onClick={togglePlay}>
+						{isPlaying ? <PlayStream /> : <PauseStream />}
+					</button>
+					<button
+						className='audio-player__button'
+						onClick={() => changeTrack(1)}
+					>
+						<RewindPrev />
+					</button>
+				</div>
+				{/* Информация о треке и элементы управления */}
+				<div className='audio-player__info'>
+					<div className='audio-player__volume'>
+						<VolumeCross />
+						<input
+							className='audio-player__volume-range'
+							type='range'
+							min='0'
+							max='1'
+							step='0.01'
+							value={volume}
+							onChange={handleVolumeChange}
+						/>
+						<VolumeLoud />
+					</div>
 
+					<div className='audio-player__track-title'>
+						{tracks[currentTrackIndex].title}
+					</div>
+					<input
+						className='audio-player__progress'
+						type='range'
+						min='0'
+						max={audioRef.current.duration || 0}
+						value={trackProgress}
+						onChange={handleTrackProgressChange}
+					/>
+				</div>
+				{/* Обложка трека */}
+				<img
+					id='cover-image'
+					src={tracks[currentTrackIndex].cover}
+					alt={tracks[currentTrackIndex].title}
+					className={`audio-player__cover ${
+						isPlaying ? 'audio-player__cover--rotating' : ''
+					}`}
+				/>
+			</div>
+		</div>
+	)
+}
 
-
-
-
-
-
-
-
-
-
-
-	
-      {/* <img
-				id='cover-image'
-				src={tracks[currentTrackIndex].cover}
-				alt={tracks[currentTrackIndex].title}
-				className={`cover ${isPlaying ? 'rotating' : ''}`}
-			/> */}
-      <button onClick={() => changeTrack(-1)}><RewindPrevSvg/></button>
-      <button onClick={togglePlay}>{isPlaying ? "Pause" : "Play"}</button>
-      <button onClick={() => changeTrack(1)}>Next</button>
-      <input
-        type="range"
-        min="0"
-        max="1"
-        step="0.01"
-        value={volume}
-        onChange={changeVolume}
-      />
-      <div>{tracks[currentTrackIndex].title}</div>
-    </div>
-  );
-};
-
-export default App;
+export default App
